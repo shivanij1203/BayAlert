@@ -1,0 +1,82 @@
+"""
+Celery worker configuration and scheduled tasks.
+Reference: https://github.com/testdrivenio/fastapi-celery
+
+Tasks:
+- ingest_usgs: pulls latest USGS data every 15 minutes
+- check_alerts: runs anomaly checks after each ingestion
+"""
+
+import logging
+from celery import Celery
+from celery.schedules import crontab
+
+from app.config import settings
+
+logger = logging.getLogger(__name__)
+
+celery_app = Celery(
+    "bayalert",
+    broker=settings.redis_url,
+    backend=settings.redis_url,
+)
+
+celery_app.conf.update(
+    task_serializer="json",
+    accept_content=["json"],
+    result_serializer="json",
+    timezone="US/Eastern",
+    enable_utc=True,
+)
+
+# scheduled tasks — runs ingestion every 15 minutes
+celery_app.conf.beat_schedule = {
+    "ingest-usgs-every-15-min": {
+        "task": "app.tasks.worker.ingest_usgs",
+        "schedule": crontab(minute="*/15"),
+    },
+    "check-alerts-every-15-min": {
+        "task": "app.tasks.worker.check_alerts",
+        "schedule": crontab(minute="*/15"),
+        "args": [],
+        "options": {"countdown": 60},  # run 1 min after ingestion
+    },
+}
+
+
+@celery_app.task(name="app.tasks.worker.ingest_usgs")
+def ingest_usgs():
+    """Pull latest readings from USGS and store in TimescaleDB."""
+    from app.database import SessionLocal
+    from app.services.ingest import run_ingestion
+
+    db = SessionLocal()
+    try:
+        count = run_ingestion(db, period="P1D")
+        logger.info(f"ingestion task complete: {count} new records")
+        return {"status": "ok", "records_inserted": count}
+    except Exception as e:
+        logger.error(f"ingestion failed: {e}")
+        return {"status": "error", "message": str(e)}
+    finally:
+        db.close()
+
+
+@celery_app.task(name="app.tasks.worker.check_alerts")
+def check_alerts():
+    """Run threshold checks on recent readings."""
+    from app.database import SessionLocal
+    from app.services.alerts import check_turbidity, check_conductance_spikes
+
+    db = SessionLocal()
+    try:
+        turbidity_alerts = check_turbidity(db)
+        conductance_alerts = check_conductance_spikes(db)
+        total = turbidity_alerts + conductance_alerts
+        logger.info(f"alert check complete: {total} new alerts")
+        return {"status": "ok", "alerts_created": total}
+    except Exception as e:
+        logger.error(f"alert check failed: {e}")
+        return {"status": "error", "message": str(e)}
+    finally:
+        db.close()
