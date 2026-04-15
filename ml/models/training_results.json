@@ -1,0 +1,120 @@
+{
+  "anomaly_detector_conductance": {
+    "samples": 2729,
+    "anomalies_detected": 137,
+    "anomaly_rate": 5.02,
+    "score_threshold": -0.5603503204841734
+  },
+  "anomaly_detector_turbidity": {
+    "samples": 2729,
+    "anomalies_detected": 137,
+    "anomaly_rate": 5.02,
+    "score_threshold": -0.5484913772788707
+  },
+  "forecaster_turbidity": {
+    "target": "turbidity",
+    "horizon_steps": 8,
+    "horizon_minutes": 120,
+    "cv_mae_mean": 0.9445,
+    "cv_mae_std": 0.8022,
+    "cv_rmse_mean": 2.2567,
+    "cv_rmse_std": 2.8969,
+    "n_features": 61,
+    "n_samples": 2721,
+    "top_features": [
+      {
+        "name": "dissolved_oxygen_roll_24_max",
+        "importance": 0.2742
+      },
+      {
+        "name": "turbidity_roll_8_min",
+        "importance": 0.2618
+      },
+      {
+        "name": "turbidity_roll_96_mean",
+        "importance": 0.1059
+      },
+      {
+        "name": "conductance_lag_4",
+        "importance": 0.0794
+      },
+      {
+        "name": "turbidity_lag_2",
+        "importance": 0.055
+      },
+      {
+        "name": "turbidity_lag_1",
+        "importance": 0.0396
+      },
+      {
+        "name": "turbidity_lag_8",
+        "importance": 0.03
+      },
+      {
+        "name": "conductance",
+        "importance": 0.0152
+      },
+      {
+        "name": "conductance_lag_8",
+        "importance": 0.0111
+      },
+      {
+        "name": "temperature_roll_24_std",
+        "importance": 0.0103
+      }
+    ]
+  },
+  "forecaster_conductance": {
+    "target": "conductance",
+    "horizon_steps": 8,
+    "horizon_minutes": 120,
+    "cv_mae_mean": 19.8018,
+    "cv_mae_std": 18.9439,
+    "cv_rmse_mean": 28.1875,
+    "cv_rmse_std": 27.9654,
+    "n_features": 61,
+    "n_samples": 2721,
+    "top_features": [
+      {
+        "name": "conductance_roll_8_min",
+        "importance": 0.5572
+      },
+      {
+        "name": "conductance",
+        "importance": 0.2055
+      },
+      {
+        "name": "conductance_lag_1",
+        "importance": 0.1377
+      },
+      {
+        "name": "temperature_roll_8_max",
+        "importance": 0.0176
+      },
+      {
+        "name": "conductance_pct_change_4",
+        "importance": 0.0094
+      },
+      {
+        "name": "conductance_lag_2",
+        "importance": 0.0073
+      },
+      {
+        "name": "temperature_roll_24_max",
+        "importance": 0.0072
+      },
+      {
+        "name": "turbidity_roll_8_min",
+        "importance": 0.0071
+      },
+      {
+        "name": "temperature_roll_8_mean",
+        "importance": 0.006
+      },
+      {
+        "name": "temperature_lag_1",
+        "importance": 0.0053
+      }
+    ]
+  }
+}
