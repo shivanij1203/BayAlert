@@ -12,7 +12,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.database import init_db
-from app.routers import readings, alerts, predictions
+from app.routers import readings, alerts, predictions, cascade
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -45,6 +45,7 @@ app.add_middleware(
 app.include_router(readings.router)
 app.include_router(alerts.router)
 app.include_router(predictions.router)
+app.include_router(cascade.router)
 
 
 @app.get("/health")

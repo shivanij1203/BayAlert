@@ -5,6 +5,7 @@ Reference: https://github.com/testdrivenio/fastapi-celery
 Tasks:
 - ingest_usgs: pulls latest USGS data every 15 minutes
 - check_alerts: runs anomaly checks after each ingestion
+- check_cascade: runs cross-station propagation checks
 """
 
 import logging
@@ -40,6 +41,12 @@ celery_app.conf.beat_schedule = {
         "schedule": crontab(minute="*/15"),
         "args": [],
         "options": {"countdown": 60},  # run 1 min after ingestion
+    },
+    "check-cascade-every-15-min": {
+        "task": "app.tasks.worker.check_cascade",
+        "schedule": crontab(minute="*/15"),
+        "args": [],
+        "options": {"countdown": 90},  # run after alert checks
     },
 }
 
@@ -77,6 +84,24 @@ def check_alerts():
         return {"status": "ok", "alerts_created": total}
     except Exception as e:
         logger.error(f"alert check failed: {e}")
+        return {"status": "error", "message": str(e)}
+    finally:
+        db.close()
+
+
+@celery_app.task(name="app.tasks.worker.check_cascade")
+def check_cascade():
+    """Run cross-station propagation checks for upstream events."""
+    from app.database import SessionLocal
+    from app.services.cascade import check_cascade_alerts
+
+    db = SessionLocal()
+    try:
+        cascade_alerts = check_cascade_alerts(db)
+        logger.info(f"cascade check complete: {cascade_alerts} new cascade alerts")
+        return {"status": "ok", "cascade_alerts": cascade_alerts}
+    except Exception as e:
+        logger.error(f"cascade check failed: {e}")
         return {"status": "error", "message": str(e)}
     finally:
         db.close()
