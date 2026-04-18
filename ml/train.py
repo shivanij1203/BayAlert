@@ -78,7 +78,7 @@ def main(data_path: str):
         ]
         results["forecaster_turbidity"] = fc_turb_metrics
 
-    # --- forecaster: conductance 2hr ahead ---
+    # --- forecaster: conductance 2hr ahead (Lithia, rich features) ---
     if "conductance" in pivoted.columns:
         logger.info("training conductance forecaster (2hr horizon)...")
         features_cond = build_feature_matrix(pivoted, target_col="conductance")
@@ -93,6 +93,30 @@ def main(data_path: str):
             for name, imp in top_features
         ]
         results["forecaster_conductance"] = fc_cond_metrics
+
+    # --- universal conductance forecaster (uses only conductance + temperature) ---
+    # this works across all 5 stations since they all have these two parameters
+    logger.info("training universal conductance forecaster (works on all stations)...")
+    universal_frames = []
+    for station in stations:
+        s_pivoted = pivot_parameters(raw_df, station=station)
+        if "conductance" not in s_pivoted.columns:
+            continue
+        # keep only conductance and temperature (common to all stations)
+        cols = [c for c in ("conductance", "temperature") if c in s_pivoted.columns]
+        universal_frames.append(s_pivoted[cols])
+
+    if universal_frames:
+        import pandas as pd
+        universal_df = pd.concat(universal_frames).sort_index()
+        # deduplicate timestamps when stations report at the same minute
+        universal_df = universal_df.groupby(universal_df.index).mean()
+        features_univ = build_feature_matrix(universal_df, target_col="conductance")
+
+        forecaster_univ = WaterQualityForecaster(target_col="conductance")
+        fc_univ_metrics = forecaster_univ.train(features_univ)
+        forecaster_univ.save("forecaster_conductance_universal")
+        results["forecaster_conductance_universal"] = fc_univ_metrics
 
     # save training results
     results_path = Path(__file__).parent / "models" / "training_results.json"

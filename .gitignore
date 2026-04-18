@@ -4,8 +4,12 @@ __pycache__/
 *.pyo
 .env
 node_modules/
+dist/
 data/*.db
 data/*.sqlite
 .DS_Store
 .idea/
 .vscode/
+.pytest_cache/
+.ipynb_checkpoints/
+celerybeat-schedule*

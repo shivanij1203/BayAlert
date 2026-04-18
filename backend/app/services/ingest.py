@@ -79,9 +79,16 @@ def store_readings(db: Session, df, station_names: dict = None):
             continue
 
         for param_code, param_name in PARAM_NAMES.items():
+            # try direct column first, then depth-specific variants (top/middle/bottom)
             value = row.get(param_code)
+            if value is None or value != value:
+                for suffix in ("_top", "_middle", "_bottom"):
+                    alt = row.get(f"{param_code}{suffix}")
+                    if alt is not None and alt == alt:
+                        value = alt
+                        break
 
-            if value is None or value != value:  # NaN check
+            if value is None or value != value:  # still NaN
                 continue
 
             # skip USGS missing value sentinel

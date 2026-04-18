@@ -116,5 +116,16 @@
         "importance": 0.0053
       }
     ]
+  },
+  "forecaster_conductance_universal": {
+    "target": "conductance",
+    "horizon_steps": 8,
+    "horizon_minutes": 120,
+    "cv_mae_mean": 1316.9592,
+    "cv_mae_std": 246.306,
+    "cv_rmse_mean": 1818.5795,
+    "cv_rmse_std": 423.2583,
+    "n_features": 37,
+    "n_samples": 2834
   }
 }

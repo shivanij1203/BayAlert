@@ -13,7 +13,9 @@ from sqlalchemy import text
 
 logger = logging.getLogger(__name__)
 
-ML_DIR = Path(__file__).parent.parent.parent.parent / "ml"
+# resolve ml directory: prefer /ml (Docker mount), fallback to local path
+_DOCKER_ML = Path("/ml")
+ML_DIR = _DOCKER_ML if _DOCKER_ML.exists() else Path(__file__).parent.parent.parent.parent / "ml"
 
 
 def get_recent_readings(db: Session, station_id: str, hours: int = 24) -> pd.DataFrame:
@@ -45,6 +47,9 @@ def get_recent_readings(db: Session, station_id: str, hours: int = 24) -> pd.Dat
 
     pivoted = pivoted.resample("15min").mean()
     pivoted = pivoted.ffill(limit=4)
+
+    # rename DB column to match the name used during model training
+    pivoted = pivoted.rename(columns={"specific_conductance": "conductance"})
 
     return pivoted
 
@@ -99,7 +104,10 @@ def run_forecast(db: Session, station_id: str, parameter: str = "turbidity"):
     from ml.forecaster import WaterQualityForecaster
     from ml.features import build_feature_matrix
 
-    forecaster = WaterQualityForecaster(target_col=parameter)
+    # normalize: model files are saved with internal name "conductance"
+    model_param = "conductance" if parameter == "specific_conductance" else parameter
+
+    forecaster = WaterQualityForecaster(target_col=model_param)
     try:
         forecaster.load()
     except FileNotFoundError:
@@ -107,28 +115,43 @@ def run_forecast(db: Session, station_id: str, parameter: str = "turbidity"):
         return None
 
     pivoted = get_recent_readings(db, station_id, hours=48)
-    if pivoted.empty or parameter not in pivoted.columns:
+    if pivoted.empty or model_param not in pivoted.columns:
         return None
 
-    features = build_feature_matrix(pivoted, target_col=parameter)
+    features = build_feature_matrix(pivoted, target_col=model_param)
     if features.empty:
         return None
 
     # predict on the last row (most recent data point)
     last_row = features.iloc[[-1]]
-    prediction = forecaster.predict(last_row)[0]
+
+    # try the rich (Lithia-trained) model first; fall back to universal model
+    # if station doesn't have all features (e.g. no turbidity / dissolved oxygen)
+    try:
+        prediction = float(forecaster.predict(last_row)[0])
+    except KeyError:
+        if model_param == "conductance":
+            try:
+                forecaster.load("forecaster_conductance_universal")
+                prediction = float(forecaster.predict(last_row)[0])
+            except (FileNotFoundError, KeyError) as e:
+                logger.warning(f"universal forecaster also failed for {station_id}: {e}")
+                return None
+        else:
+            return None
 
     # current value for comparison
-    current = float(features[parameter].iloc[-1])
+    current = float(features[model_param].iloc[-1])
+    change_pct = round(((prediction - current) / current) * 100, 2) if current != 0 else 0.0
 
     return {
         "parameter": parameter,
         "current_value": round(current, 2),
-        "predicted_value": round(float(prediction), 2),
-        "forecast_minutes": forecaster.horizon * 15,
+        "predicted_value": round(prediction, 2),
+        "forecast_minutes": int(forecaster.horizon * 15),
         "forecast_time": (
             datetime.now(timezone.utc) + timedelta(minutes=forecaster.horizon * 15)
         ).isoformat(),
         "direction": "rising" if prediction > current else "falling",
-        "change_pct": round(((prediction - current) / current) * 100, 2) if current != 0 else 0,
+        "change_pct": float(change_pct),
     }

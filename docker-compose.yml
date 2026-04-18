@@ -27,6 +27,7 @@ services:
       - "8000:8000"
     volumes:
       - ./backend:/app
+      - ./ml:/ml
     depends_on:
       - db
       - redis
@@ -40,6 +41,7 @@ services:
     command: celery -A app.tasks.worker worker --loglevel=info
     volumes:
       - ./backend:/app
+      - ./ml:/ml
     depends_on:
       - db
       - redis
@@ -53,6 +55,7 @@ services:
     command: celery -A app.tasks.worker beat --loglevel=info
     volumes:
       - ./backend:/app
+      - ./ml:/ml
     depends_on:
       - db
       - redis

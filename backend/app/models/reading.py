@@ -9,12 +9,12 @@ class Reading(Base):
     """
     __tablename__ = "readings"
 
-    id = Column(BigInteger, primary_key=True, autoincrement=True)
-    station_id = Column(String(20), nullable=False)
+    # composite primary key — recorded_at must be in the key for TimescaleDB hypertable partitioning
+    recorded_at = Column(DateTime(timezone=True), primary_key=True, nullable=False)
+    station_id = Column(String(20), primary_key=True, nullable=False)
+    parameter = Column(String(50), primary_key=True, nullable=False)
     station_name = Column(String(200), nullable=False)
-    parameter = Column(String(50), nullable=False)
     value = Column(Float, nullable=False)
-    recorded_at = Column(DateTime(timezone=True), nullable=False)
     ingested_at = Column(DateTime(timezone=True), nullable=False)
 
     __table_args__ = (
