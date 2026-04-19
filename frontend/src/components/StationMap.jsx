@@ -1,19 +1,6 @@
-import { MapContainer, TileLayer, Marker, Popup, Polyline } from "react-leaflet";
+import { MapContainer, TileLayer, CircleMarker, Tooltip, Polyline } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
-import L from "leaflet";
 
-// fix default marker icon issue with bundlers
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl:
-    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png",
-  iconUrl:
-    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png",
-  shadowUrl:
-    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
-});
-
-// approximate lat/lng for our USGS stations
 const STATION_COORDS = {
   "02301500": { lat: 27.872, lng: -82.211, name: "Alafia River at Lithia" },
   "02301718": { lat: 27.869, lng: -82.326, name: "Alafia River at Riverview" },
@@ -22,62 +9,113 @@ const STATION_COORDS = {
   "023000095": { lat: 27.514, lng: -82.367, name: "Manatee River at Rye" },
 };
 
-// upstream → downstream connections for the Alafia River
 const FLOW_LINES = [
   [
-    [27.872, -82.211], // Lithia
-    [27.869, -82.326], // Riverview
-    [27.86, -82.384],  // Gibsonton
+    [27.872, -82.211],
+    [27.869, -82.326],
+    [27.86, -82.384],
   ],
 ];
 
-const TAMPA_BAY_CENTER = [27.85, -82.35];
+const TAMPA_BAY_CENTER = [27.78, -82.36];
+
+// CartoDB Positron — clean, minimal map style used by Apple Maps and most modern dashboards
+const TILE_URL = "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
+const TILE_ATTRIBUTION =
+  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>';
 
 export default function StationMap({ selectedStation, onSelectStation }) {
   return (
-    <div style={{ height: "400px", width: "100%", borderRadius: "8px", overflow: "hidden" }}>
+    <div
+      style={{
+        height: "420px",
+        width: "100%",
+        borderRadius: "8px",
+        overflow: "hidden",
+      }}
+      role="region"
+      aria-label="Tampa Bay watershed map"
+    >
       <MapContainer
         center={TAMPA_BAY_CENTER}
-        zoom={11}
-        style={{ height: "100%", width: "100%" }}
+        zoom={10}
+        style={{ height: "100%", width: "100%", background: "#f4f5f7" }}
+        zoomControl={true}
+        scrollWheelZoom={false}
       >
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          url={TILE_URL}
+          attribution={TILE_ATTRIBUTION}
+          subdomains={["a", "b", "c", "d"]}
         />
 
-        {/* river flow direction lines */}
         {FLOW_LINES.map((line, i) => (
           <Polyline
             key={i}
             positions={line}
-            color="#2196f3"
-            weight={3}
-            opacity={0.6}
-            dashArray="10 6"
+            pathOptions={{
+              color: "#0e7490",
+              weight: 2.5,
+              opacity: 0.55,
+              dashArray: "6 6",
+            }}
           />
         ))}
 
-        {/* station markers */}
-        {Object.entries(STATION_COORDS).map(([id, { lat, lng, name }]) => (
-          <Marker
-            key={id}
-            position={[lat, lng]}
-            eventHandlers={{
-              click: () => onSelectStation && onSelectStation(id),
-            }}
-          >
-            <Popup>
-              <strong>{name}</strong>
-              <br />
-              Station ID: {id}
-              {selectedStation === id && (
-                <span style={{ color: "#2196f3" }}> (selected)</span>
-              )}
-            </Popup>
-          </Marker>
-        ))}
+        {Object.entries(STATION_COORDS).map(([id, { lat, lng, name }]) => {
+          const isActive = selectedStation === id;
+          return (
+            <StationMarker
+              key={id}
+              id={id}
+              lat={lat}
+              lng={lng}
+              name={name}
+              isActive={isActive}
+              onSelect={onSelectStation}
+            />
+          );
+        })}
       </MapContainer>
     </div>
+  );
+}
+
+function StationMarker({ id, lat, lng, name, isActive, onSelect }) {
+  // active marker: larger, filled with primary, with halo
+  // inactive marker: small, outlined
+  return (
+    <>
+      {isActive && (
+        <CircleMarker
+          center={[lat, lng]}
+          radius={16}
+          pathOptions={{
+            color: "#0e7490",
+            fillColor: "#0e7490",
+            fillOpacity: 0.15,
+            weight: 0,
+          }}
+          interactive={false}
+        />
+      )}
+      <CircleMarker
+        center={[lat, lng]}
+        radius={isActive ? 9 : 6}
+        pathOptions={{
+          color: "white",
+          fillColor: isActive ? "#0e7490" : "#475569",
+          fillOpacity: 1,
+          weight: 2.5,
+        }}
+        eventHandlers={{
+          click: () => onSelect && onSelect(id),
+        }}
+      >
+        <Tooltip direction="top" offset={[0, -8]} opacity={1} permanent={isActive}>
+          <span style={{ fontWeight: isActive ? 600 : 500 }}>{name}</span>
+        </Tooltip>
+      </CircleMarker>
+    </>
   );
 }

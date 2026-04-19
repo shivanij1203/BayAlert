@@ -1,3 +1,5 @@
+import { motion } from "motion/react";
+
 const STATIONS = [
   { id: "02301500", name: "Alafia River at Lithia (upstream)" },
   { id: "02301718", name: "Alafia River at Riverview" },
@@ -13,7 +15,6 @@ const ALL_PARAMETERS = [
   { code: "dissolved_oxygen", label: "Dissolved Oxygen (mg/L)" },
 ];
 
-// only Lithia reports turbidity and dissolved oxygen via USGS
 const STATION_PARAMETERS = {
   "02301500": ["specific_conductance", "turbidity", "temperature", "dissolved_oxygen"],
   "02301718": ["specific_conductance", "temperature"],
@@ -33,8 +34,6 @@ export default function StationSelector({
 
   function handleStationChange(newStationId) {
     const newAvailable = STATION_PARAMETERS[newStationId] || [];
-    // if the currently selected parameter isn't available at the new station,
-    // fall back to the first available one
     if (!newAvailable.includes(selectedParameter)) {
       onParameterChange(newAvailable[0]);
     }
@@ -42,7 +41,12 @@ export default function StationSelector({
   }
 
   return (
-    <div className="station-selector">
+    <motion.div
+      className="card station-selector"
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, delay: 0.1 }}
+    >
       <div className="selector-group">
         <label htmlFor="station-select">Station</label>
         <select
@@ -72,6 +76,6 @@ export default function StationSelector({
           ))}
         </select>
       </div>
-    </div>
+    </motion.div>
   );
 }
