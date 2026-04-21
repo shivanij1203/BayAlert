@@ -2,7 +2,7 @@ import { motion } from "motion/react";
 
 export default function HowItWorks() {
   return (
-    <section className="how">
+    <section className="how" id="how-it-works">
       <motion.div
         className="how-intro"
         initial={{ opacity: 0, y: 16 }}
@@ -111,12 +111,12 @@ function ForecastSparkline() {
       <svg viewBox={`0 0 ${w} ${h + 20}`} width="100%" height="100">
         <defs>
           <linearGradient id="sl-grad" x1="0" x2="0" y1="0" y2="1">
-            <stop offset="0%" stopColor="#0e7490" stopOpacity="0.3" />
-            <stop offset="100%" stopColor="#0e7490" stopOpacity="0" />
+            <stop offset="0%" stopColor="#67e8f9" stopOpacity="0.35" />
+            <stop offset="100%" stopColor="#67e8f9" stopOpacity="0" />
           </linearGradient>
         </defs>
-        <line x1={splitX} x2={splitX} y1="0" y2={h} stroke="#cbd5e1" strokeDasharray="2 3" />
-        <text x={splitX + 4} y={12} fill="#9ca3af" fontSize="9" fontFamily="JetBrains Mono">now</text>
+        <line x1={splitX} x2={splitX} y1="0" y2={h} stroke="rgba(255,255,255,0.4)" strokeDasharray="2 3" />
+        <text x={splitX + 4} y={12} fill="rgba(255,255,255,0.7)" fontSize="9" fontFamily="JetBrains Mono">now</text>
 
         {/* historical area + line */}
         <motion.path
@@ -130,7 +130,7 @@ function ForecastSparkline() {
         <motion.path
           d={pathFor(history, 0)}
           fill="none"
-          stroke="#0e7490"
+          stroke="#67e8f9"
           strokeWidth="2"
           initial={{ pathLength: 0 }}
           whileInView={{ pathLength: 1 }}

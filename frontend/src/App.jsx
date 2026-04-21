@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { motion } from "motion/react";
 import Hero from "./components/Hero";
+import NavBar from "./components/NavBar";
+import PageBackground from "./components/PageBackground";
 import LiveProofBar from "./components/LiveProofBar";
 import WhyItMatters from "./components/WhyItMatters";
 import HowItWorks from "./components/HowItWorks";
@@ -39,7 +41,9 @@ function App() {
   }
 
   return (
-    <div className="page">
+    <div className="page" id="top">
+      <PageBackground />
+      <NavBar onJumpToDashboard={scrollToDashboard} connected={connected} />
       <Hero onScrollToDashboard={scrollToDashboard} />
 
       <LiveProofBar />

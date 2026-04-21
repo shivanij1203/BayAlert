@@ -2,7 +2,329 @@
    BayAlert
    ============================================ */
 
-.page { width: 100%; overflow-x: hidden; }
+.page {
+  width: 100%;
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* ============================================
+   TOP NAVBAR (sticky, translucent over waves)
+   ============================================ */
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-8);
+  padding: 22px var(--space-10);
+  min-height: 76px;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  transition: background 200ms ease, border-color 200ms ease;
+}
+
+.navbar.navbar-scrolled {
+  background: rgba(0, 0, 0, 0.85);
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+.nav-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  color: white;
+  text-decoration: none;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.nav-mark {
+  display: inline-flex;
+  filter: drop-shadow(0 0 16px rgba(34, 211, 238, 0.4));
+}
+
+.nav-mark svg { width: 40px; height: 40px; }
+
+.nav-wordmark {
+  font-family: 'Inter', sans-serif;
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.nav-word-bay { color: #67e8f9; }
+.nav-word-alert { color: white; }
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.nav-link {
+  background: transparent;
+  border: none;
+  padding: 10px 16px;
+  font-size: 16px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.78);
+  cursor: pointer;
+  border-radius: 8px;
+  transition: color 150ms ease, background 150ms ease;
+}
+
+.nav-link:hover {
+  color: white;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.nav-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 0.01em;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.nav-status.live { color: #34d399; border-color: rgba(52, 211, 153, 0.25); background: rgba(52, 211, 153, 0.08); }
+.nav-status.offline { color: #fca5a5; border-color: rgba(220, 38, 38, 0.25); background: rgba(220, 38, 38, 0.08); }
+
+.nav-status-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 0 0 currentColor;
+}
+
+.nav-status.live .nav-status-dot { animation: pulse-nav 2s ease-in-out infinite; }
+
+@keyframes pulse-nav {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.5); }
+  50% { box-shadow: 0 0 0 5px rgba(52, 211, 153, 0); }
+}
+
+.nav-github {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  color: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  transition: color 150ms ease, border-color 150ms ease, background 150ms ease;
+}
+
+.nav-github svg { width: 20px; height: 20px; }
+
+.nav-github:hover {
+  color: white;
+  border-color: rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+@media (max-width: 820px) {
+  .navbar { padding: 12px var(--space-5); gap: var(--space-3); }
+  .nav-links { display: none; }
+}
+
+/* ============================================
+   GLOBAL WATER BACKGROUND — like the hero, everywhere
+   ============================================ */
+html, body { background: #000000; }
+
+.page-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  opacity: 1;
+  pointer-events: none;
+}
+
+.page-bg canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
+
+/* every section sits ABOVE the bg — but keep the bg itself fixed & full-screen.
+   Exclude .navbar so its position: sticky is preserved. */
+.page > *:not(.page-bg):not(.navbar) { position: relative; z-index: 1; }
+
+/* remove white backgrounds and hard borders — sections flow into one continuous page */
+.proof-bar,
+.dashboard-section,
+.why,
+.how,
+.page-footer {
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  border-top: none !important;
+  border-bottom: none !important;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+/* section text on pure black — bright enough to read over the flowing waves */
+.proof-num { color: #f8fafc !important; }
+.proof-label { color: rgba(241, 245, 249, 0.9) !important; }
+.proof-divider { background: rgba(255, 255, 255, 0.18) !important; }
+.proof-status.live { color: #34d399 !important; }
+
+/* section intros — eyebrow + headline + lede */
+.eyebrow { color: #67e8f9 !important; }
+.h2 { color: #ffffff !important; }
+.lede { color: rgba(248, 250, 252, 0.95) !important; }
+
+/* HowItWorks rows */
+.how-row { border-top-color: rgba(255, 255, 255, 0.12) !important; }
+.how-row:last-child { border-bottom-color: rgba(255, 255, 255, 0.12) !important; }
+.how-row-label { color: #67e8f9 !important; }
+.how-row-step { color: rgba(241, 245, 249, 0.55) !important; }
+.how-row-title { color: #ffffff !important; }
+.how-row-body { color: rgba(248, 250, 252, 0.92) !important; }
+.how-row-code {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  color: rgba(241, 245, 249, 0.9) !important;
+}
+.how-row-visual {
+  background: rgba(255, 255, 255, 0.03) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* WhyItMatters outer labels — cyan so they read like section tags */
+.why-col-label { color: #67e8f9 !important; opacity: 1 !important; }
+
+/* no boxes — content sits directly on the waves */
+.card,
+.kpi-card,
+.app-header,
+.ticker,
+.why-col {
+  background: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* soft divider lines between KPI cells and stacked content, not box outlines */
+.kpi-card { border-right: 1px solid rgba(255, 255, 255, 0.06) !important; }
+.kpi-grid > .kpi-card:last-child { border-right: none !important; }
+
+/* dashboard header */
+.app-header .logo-text h1 { color: #ffffff; }
+.app-header .logo-text p  { color: rgba(241, 245, 249, 0.6); }
+.app-header .sync-text    { color: rgba(241, 245, 249, 0.6); }
+.app-header .header-stat-num   { color: #ffffff; }
+.app-header .header-stat-label { color: rgba(241, 245, 249, 0.6); }
+.app-header .header-stat       { border-left-color: rgba(255, 255, 255, 0.1); }
+
+/* KPI cards */
+.kpi-card:hover     { border-color: rgba(255, 255, 255, 0.18) !important; }
+.kpi-card .kpi-label { color: rgba(241, 245, 249, 0.6); }
+.kpi-card .kpi-value { color: #ffffff; }
+.kpi-card .kpi-icon  { background: rgba(255, 255, 255, 0.05); color: rgba(241, 245, 249, 0.75); }
+
+/* generic card content */
+.card .card-header h3    { color: #ffffff; }
+.card .card-header       { border-bottom: none; }
+.card .card-subtitle     { color: rgba(241, 245, 249, 0.6); }
+.card .muted-empty       { color: rgba(241, 245, 249, 0.5); }
+
+/* empty states inside cards */
+.card .empty-title { color: #ffffff; }
+.card .empty-hint  { color: rgba(241, 245, 249, 0.55); }
+.card .empty-icon  { color: rgba(241, 245, 249, 0.35); }
+
+/* forecast mini */
+.card .forecast-mini-label         { color: rgba(241, 245, 249, 0.6); }
+.card .forecast-mini-value         { color: #ffffff; }
+.card .forecast-mini-value.primary { color: #67e8f9; }
+.card .forecast-param              { color: rgba(241, 245, 249, 0.45); border-top-color: rgba(255, 255, 255, 0.08); }
+
+/* alerts */
+.card .alert-item         { background: rgba(255, 255, 255, 0.03); }
+.card .alert-item.critical { background: rgba(220, 38, 38, 0.08); }
+.card .alert-message      { color: rgba(241, 245, 249, 0.92); }
+.card .alert-time         { color: rgba(241, 245, 249, 0.5); }
+
+/* selector */
+.card .selector-group label  { color: rgba(241, 245, 249, 0.65); }
+.card .selector-group select {
+  background: rgba(255, 255, 255, 0.05);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.12);
+}
+.card .selector-group select:hover { border-color: rgba(255, 255, 255, 0.22); }
+.card .selector-group select option { background: #0a1628; color: #ffffff; }
+
+/* live pill on glass */
+.app-header .live-pill {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: rgba(241, 245, 249, 0.75);
+}
+.app-header .live-pill.live {
+  background: rgba(52, 211, 153, 0.1);
+  border-color: rgba(52, 211, 153, 0.3);
+  color: #34d399;
+}
+.app-header .live-pill.offline {
+  background: rgba(220, 38, 38, 0.1);
+  border-color: rgba(220, 38, 38, 0.3);
+  color: #fca5a5;
+}
+
+.why-col-bad  { border-left: 2px solid rgba(220, 38, 38, 0.55) !important; padding-left: var(--space-6) !important; }
+.why-col-good { border-left: 2px solid rgba(52, 211, 153, 0.55) !important; padding-left: var(--space-6) !important; }
+
+.why-col .timeline::before { background: rgba(255, 255, 255, 0.2) !important; }
+.why-col .timeline-marker  {
+  background: rgba(0, 0, 0, 0.6) !important;
+  border-color: rgba(255, 255, 255, 0.35) !important;
+}
+.why-col .timeline-time  { color: rgba(241, 245, 249, 0.8) !important; }
+.why-col .timeline-label { color: #ffffff !important; }
+.why-col .why-col-foot   {
+  color: rgba(241, 245, 249, 0.88) !important;
+  border-top-color: rgba(255, 255, 255, 0.18) !important;
+}
+
+/* alert pill text on dark bg */
+.live-pill { background: rgba(255, 255, 255, 0.08); color: rgba(255, 255, 255, 0.85); border-color: rgba(255, 255, 255, 0.12); }
+.live-pill.live { background: rgba(52, 211, 153, 0.12); color: #34d399; border-color: rgba(52, 211, 153, 0.3); }
+.live-pill.offline { background: rgba(220, 38, 38, 0.12); color: #fca5a5; border-color: rgba(220, 38, 38, 0.3); }
+
+/* footer link text */
+.page-footer p { color: rgba(241, 245, 249, 0.55) !important; }
+.page-footer a { color: #67e8f9 !important; }
+
+/* sparkline legend inside how-it-works visual */
+.sparkline-legend { color: rgba(241, 245, 249, 0.7) !important; }
+.sparkline-legend .dot.solid { background: #67e8f9 !important; }
+.sparkline-legend .dot.dashed { background: #22d3ee !important; }
 
 /* hero-fade removed — was creating an awkward gap */
 .hero-fade { display: none; }
@@ -422,41 +744,26 @@
    ============================================ */
 .hero {
   position: relative;
-  background: var(--hero-bg);
+  background: transparent;
   color: var(--hero-text);
   padding: var(--space-16) var(--space-8);
   overflow: hidden;
-  border-bottom: 1px solid var(--hero-border);
 }
 
 .hero-water {
   position: absolute;
   inset: 0;
   z-index: 0;
-  opacity: 0.4;
+  opacity: 0.6;
   pointer-events: none;
 }
 
 .hero-grid-bg {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  background-image:
-    linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
-  background-size: 48px 48px;
-  mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 40%, transparent 100%);
-  pointer-events: none;
+  display: none;
 }
 
 .hero-vignette {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  background:
-    radial-gradient(ellipse 90% 70% at 50% 50%, transparent 30%, rgba(10, 22, 40, 0.55) 100%),
-    linear-gradient(180deg, rgba(10, 22, 40, 0.3) 0%, transparent 25%, transparent 70%, rgba(10, 22, 40, 0.5) 100%);
-  pointer-events: none;
+  display: none;
 }
 
 .hero-inner {

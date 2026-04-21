@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "motion/react";
 import { getLatestReadings, getAlerts, getStationHistory } from "../services/api";
-import FlowingWaves from "./FlowingWaves";
 import Sparkline from "./Sparkline";
 import Skeleton from "./Skeleton";
 
@@ -22,9 +21,6 @@ const PARAM_UNITS = {
 export default function Hero({ onScrollToDashboard }) {
   return (
     <section className="hero">
-      <div className="hero-water">
-        <FlowingWaves intensity={0.85} speed={0.4} />
-      </div>
       <div className="hero-grid-bg" />
       <div className="hero-vignette" />
 

@@ -1,12 +1,12 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
 :root {
-  /* dark hero palette */
-  --hero-bg: #0a1628;
-  --hero-text: #e2e8f0;
-  --hero-text-muted: #94a3b8;
-  --hero-accent: #22d3ee;
-  --hero-border: rgba(255, 255, 255, 0.08);
+  /* dark hero palette — tuned for pure-black background */
+  --hero-bg: #000000;
+  --hero-text: #f8fafc;
+  --hero-text-muted: #e2e8f0;
+  --hero-accent: #67e8f9;
+  --hero-border: rgba(255, 255, 255, 0.14);
 
   /* light app palette */
   --color-primary: #0e7490;
@@ -60,7 +60,7 @@ html, body {
   margin: 0;
   padding: 0;
   width: 100%;
-  background: var(--color-bg);
+  background: #000000;
   color: var(--color-text);
 }
 

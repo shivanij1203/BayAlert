@@ -2,7 +2,7 @@ import { motion } from "motion/react";
 
 export default function WhyItMatters() {
   return (
-    <section className="why">
+    <section className="why" id="why-it-matters">
       <div className="why-inner">
         <motion.div
           className="why-intro"
