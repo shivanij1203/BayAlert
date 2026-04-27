@@ -53,6 +53,22 @@ class Settings(BaseSettings):
         "BayAlert/0.1 (shivanijagannatham@gmail.com)",
     )
 
+    # notification delivery
+    webhook_url: str | None = os.getenv("BAYALERT_WEBHOOK_URL")
+    webhook_timeout_s: float = 10.0
+
+    smtp_host: str | None = os.getenv("SMTP_HOST")
+    smtp_port: int = int(os.getenv("SMTP_PORT", "587"))
+    smtp_user: str | None = os.getenv("SMTP_USER")
+    smtp_password: str | None = os.getenv("SMTP_PASSWORD")
+    smtp_from: str = os.getenv("SMTP_FROM", "bayalert@example.com")
+    smtp_to: list[str] = [
+        addr.strip() for addr in os.getenv("SMTP_TO", "").split(",") if addr.strip()
+    ]
+
+    # escalate a critical alert if un-acked for this many minutes
+    escalation_grace_minutes: int = 10
+
     class Config:
         env_file = ".env"
 

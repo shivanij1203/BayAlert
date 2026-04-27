@@ -44,3 +44,16 @@ def init_db():
                 )
             )
         conn.commit()
+
+    # idempotent column additions for the operator-workflow fields on alerts
+    with engine.connect() as conn:
+        for column_ddl in (
+            "ADD COLUMN IF NOT EXISTS acknowledged_at TIMESTAMPTZ",
+            "ADD COLUMN IF NOT EXISTS acknowledged_by VARCHAR(120)",
+            "ADD COLUMN IF NOT EXISTS notes VARCHAR(1000)",
+            "ADD COLUMN IF NOT EXISTS feedback VARCHAR(32) NOT NULL DEFAULT 'unknown'",
+            "ADD COLUMN IF NOT EXISTS last_delivered_at TIMESTAMPTZ",
+            "ADD COLUMN IF NOT EXISTS escalated_at TIMESTAMPTZ",
+        ):
+            conn.execute(text(f"ALTER TABLE alerts {column_ddl}"))
+        conn.commit()

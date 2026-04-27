@@ -52,6 +52,15 @@ celery_app.conf.beat_schedule = {
         "task": "app.tasks.worker.ingest_env",
         "schedule": crontab(minute="*/30"),
     },
+    "deliver-pending-alerts-every-min": {
+        "task": "app.tasks.worker.deliver_pending_alerts",
+        "schedule": crontab(minute="*"),
+    },
+    "escalate-stale-alerts-every-min": {
+        "task": "app.tasks.worker.escalate_stale_alerts",
+        "schedule": crontab(minute="*"),
+        "options": {"countdown": 15},
+    },
 }
 
 
@@ -89,6 +98,40 @@ def check_alerts():
     except Exception as e:
         logger.error(f"alert check failed: {e}")
         return {"status": "error", "message": str(e)}
+    finally:
+        db.close()
+
+
+@celery_app.task(name="app.tasks.worker.deliver_pending_alerts")
+def deliver_pending_alerts():
+    """Deliver freshly-created alerts to configured channels (webhook/email)."""
+    from app.database import SessionLocal
+    from app.services.alert_workflow import deliver_pending
+
+    db = SessionLocal()
+    try:
+        delivered = deliver_pending(db)
+        return {"status": "ok", "delivered": delivered}
+    except Exception as exc:  # noqa: BLE001
+        logger.error("alert delivery failed: %s", exc)
+        return {"status": "error", "message": str(exc)}
+    finally:
+        db.close()
+
+
+@celery_app.task(name="app.tasks.worker.escalate_stale_alerts")
+def escalate_stale_alerts():
+    """Re-send critical alerts that haven't been acked in the grace window."""
+    from app.database import SessionLocal
+    from app.services.alert_workflow import escalate_stale
+
+    db = SessionLocal()
+    try:
+        escalated = escalate_stale(db)
+        return {"status": "ok", "escalated": escalated}
+    except Exception as exc:  # noqa: BLE001
+        logger.error("escalation failed: %s", exc)
+        return {"status": "error", "message": str(exc)}
     finally:
         db.close()
 

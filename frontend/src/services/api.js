@@ -21,8 +21,26 @@ export function getStationHistory(stationId, parameter, hours = 24) {
     .then((r) => r.data);
 }
 
-export function getAlerts(limit = 50) {
-  return api.get("/alerts/", { params: { limit } }).then((r) => r.data);
+export function getAlerts(limit = 50, { unresolvedOnly } = {}) {
+  const params = { limit };
+  if (unresolvedOnly) params.unresolved_only = true;
+  return api.get("/alerts/", { params }).then((r) => r.data);
+}
+
+export function acknowledgeAlert(alertId, operator, notes) {
+  return api
+    .post(`/alerts/${alertId}/ack`, { operator, notes })
+    .then((r) => r.data);
+}
+
+export function resolveAlert(alertId, { operator, feedback = "confirmed", notes } = {}) {
+  return api
+    .post(`/alerts/${alertId}/resolve`, { operator, feedback, notes })
+    .then((r) => r.data);
+}
+
+export function getAlertDeliveries(alertId) {
+  return api.get(`/alerts/${alertId}/deliveries`).then((r) => r.data);
 }
 
 export function getAnomalies(stationId, parameter = "conductance") {

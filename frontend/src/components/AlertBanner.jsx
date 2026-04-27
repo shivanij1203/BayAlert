@@ -1,29 +1,69 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { getAlerts } from "../services/api";
+
+import { getAlerts, acknowledgeAlert, resolveAlert } from "../services/api";
 import { useAlertWebSocket } from "../hooks/useAlertWebSocket";
 import { AlertOctagonIcon, AlertTriangleIcon, CheckCircleIcon } from "./Icons";
 import Skeleton from "./Skeleton";
 import EmptyState from "./EmptyState";
 
+const DEFAULT_OPERATOR = "operator";
+
 export default function AlertBanner() {
-  const [historicAlerts, setHistoricAlerts] = useState([]);
+  const [serverAlerts, setServerAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [busyId, setBusyId] = useState(null);
   const { alerts: liveAlerts, connected } = useAlertWebSocket();
 
-  useEffect(() => {
-    getAlerts(20)
-      .then((a) => {
-        setHistoricAlerts(a);
-        setLoading(false);
-      })
-      .catch(() => {
-        setHistoricAlerts([]);
-        setLoading(false);
-      });
+  const reload = useCallback(() => {
+    return getAlerts(20)
+      .then((a) => setServerAlerts(a))
+      .catch(() => setServerAlerts([]));
   }, []);
 
-  const allAlerts = [...liveAlerts, ...historicAlerts].slice(0, 30);
+  useEffect(() => {
+    reload().finally(() => setLoading(false));
+  }, [reload]);
+
+  // live alerts that don't yet have a DB id get shown at the top; once the
+  // server reload completes, they merge into serverAlerts and the duplicate
+  // (same station+timestamp) is filtered out.
+  const pendingLive = liveAlerts.filter(
+    (la) =>
+      !serverAlerts.some(
+        (sa) =>
+          sa.station_id === la.station_id &&
+          sa.parameter === la.parameter &&
+          Math.abs(new Date(sa.created_at) - new Date(la.timestamp || la.created_at)) < 60_000,
+      ),
+  );
+  const allAlerts = [...pendingLive, ...serverAlerts].slice(0, 30);
+
+  async function onAck(alert) {
+    if (!alert.id) return;
+    setBusyId(alert.id);
+    try {
+      const updated = await acknowledgeAlert(alert.id, DEFAULT_OPERATOR);
+      setServerAlerts((prev) => prev.map((a) => (a.id === alert.id ? updated : a)));
+    } catch (err) {
+      // non-fatal; leave state as-is
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function onResolve(alert, feedback) {
+    if (!alert.id) return;
+    setBusyId(alert.id);
+    try {
+      const updated = await resolveAlert(alert.id, { operator: DEFAULT_OPERATOR, feedback });
+      setServerAlerts((prev) => prev.map((a) => (a.id === alert.id ? updated : a)));
+    } catch {
+      /* noop */
+    } finally {
+      setBusyId(null);
+    }
+  }
 
   return (
     <motion.div
@@ -62,39 +102,97 @@ export default function AlertBanner() {
       ) : (
         <ul className="alert-list">
           <AnimatePresence initial={false}>
-            {allAlerts.map((alert, i) => {
-              const level = (alert.level || "").toLowerCase();
-              const isCritical = level === "critical";
-              const Icon = isCritical ? AlertOctagonIcon : AlertTriangleIcon;
-              const color = isCritical ? "var(--color-critical)" : "var(--color-warning)";
-
-              return (
-                <motion.li
-                  key={alert.id || `live-${i}-${alert.timestamp}`}
-                  className={`alert-item ${level}`}
-                  initial={{ opacity: 0, x: 16 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <span className="alert-icon" style={{ color }}>
-                    <Icon size={16} color={color} />
-                  </span>
-                  <div className="alert-body">
-                    <div className="alert-message">{alert.message}</div>
-                    <div className="alert-time">
-                      {new Date(alert.created_at || alert.timestamp).toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </div>
-                  </div>
-                </motion.li>
-              );
-            })}
+            {allAlerts.map((alert, i) => (
+              <AlertRow
+                key={alert.id || `live-${i}-${alert.timestamp}`}
+                alert={alert}
+                busy={busyId === alert.id}
+                onAck={onAck}
+                onResolve={onResolve}
+              />
+            ))}
           </AnimatePresence>
         </ul>
       )}
     </motion.div>
+  );
+}
+
+function AlertRow({ alert, busy, onAck, onResolve }) {
+  const level = (alert.level || "").toLowerCase();
+  const isCritical = level === "critical";
+  const Icon = isCritical ? AlertOctagonIcon : AlertTriangleIcon;
+  const color = isCritical ? "var(--color-critical)" : "var(--color-warning)";
+
+  const acknowledged = Boolean(alert.acknowledged_at);
+  const resolved = Boolean(alert.resolved_at);
+  const escalated = Boolean(alert.escalated_at);
+
+  return (
+    <motion.li
+      className={`alert-item ${level} ${resolved ? "resolved" : ""}`}
+      initial={{ opacity: 0, x: 16 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.2 }}
+    >
+      <span className="alert-icon" style={{ color }}>
+        <Icon size={16} color={color} />
+      </span>
+      <div className="alert-body">
+        <div className="alert-message">{alert.message}</div>
+        <div className="alert-meta">
+          <span className="alert-time">
+            {new Date(alert.created_at || alert.timestamp).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+          </span>
+          {escalated && !resolved && (
+            <span className="alert-tag alert-tag-escalated">escalated</span>
+          )}
+          {acknowledged && !resolved && (
+            <span className="alert-tag alert-tag-ack">ack · {alert.acknowledged_by || "operator"}</span>
+          )}
+          {resolved && (
+            <span className="alert-tag alert-tag-resolved">
+              resolved{alert.feedback && alert.feedback !== "unknown" ? ` · ${alert.feedback.replace("_", " ")}` : ""}
+            </span>
+          )}
+        </div>
+
+        {alert.id && !resolved && (
+          <div className="alert-actions">
+            {!acknowledged && (
+              <button
+                type="button"
+                className="alert-btn"
+                onClick={() => onAck(alert)}
+                disabled={busy}
+              >
+                Acknowledge
+              </button>
+            )}
+            <button
+              type="button"
+              className="alert-btn alert-btn-primary"
+              onClick={() => onResolve(alert, "confirmed")}
+              disabled={busy}
+            >
+              Resolve
+            </button>
+            <button
+              type="button"
+              className="alert-btn alert-btn-ghost"
+              onClick={() => onResolve(alert, "false_positive")}
+              disabled={busy}
+              title="Mark this alert as a false positive (feeds back into model tuning)"
+            >
+              False positive
+            </button>
+          </div>
+        )}
+      </div>
+    </motion.li>
   );
 }
