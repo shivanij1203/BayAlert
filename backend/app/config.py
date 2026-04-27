@@ -31,6 +31,28 @@ class Settings(BaseSettings):
     turbidity_critical: float = 40.0  # FNU
     conductance_spike_pct: float = 20.0  # % change from rolling mean
 
+    # NOAA CO-OPS tide stations near Tampa Bay
+    # station metadata: https://tidesandcurrents.noaa.gov/stations.html
+    noaa_tide_stations: list[tuple[str, str]] = [
+        ("8726520", "St. Petersburg"),
+        ("8726607", "Old Port Tampa"),
+        ("8726724", "Clearwater Beach"),
+    ]
+
+    # NWS gridpoints (lat, lon, label) for weather near each watershed
+    # API: https://api.weather.gov/points/{lat},{lon}
+    nws_points: list[tuple[float, float, str]] = [
+        (27.87, -82.21, "Alafia Upstream (Lithia)"),
+        (27.95, -82.46, "Tampa Downtown"),
+        (27.48, -82.35, "Manatee Watershed (Rye)"),
+    ]
+
+    # user-agent for NWS (required by their API policy)
+    nws_user_agent: str = os.getenv(
+        "NWS_USER_AGENT",
+        "BayAlert/0.1 (shivanijagannatham@gmail.com)",
+    )
+
     class Config:
         env_file = ".env"
 

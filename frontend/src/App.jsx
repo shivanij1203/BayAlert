@@ -13,6 +13,7 @@ import StationSelector from "./components/StationSelector";
 import TrendChart from "./components/TrendChart";
 import AlertBanner from "./components/AlertBanner";
 import ForecastCard from "./components/ForecastCard";
+import EnvironmentalCard from "./components/EnvironmentalCard";
 import { useAlertWebSocket } from "./hooks/useAlertWebSocket";
 import "./App.css";
 
@@ -136,6 +137,7 @@ function App() {
                   parameter={selectedParameter}
                 />
               )}
+              <EnvironmentalCard />
               <AlertBanner />
             </aside>
           </main>

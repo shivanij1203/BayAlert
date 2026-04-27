@@ -12,7 +12,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.database import init_db
-from app.routers import readings, alerts, predictions, cascade
+from app.models import environmental as _environmental  # noqa: F401  (register mapping)
+from app.routers import readings, alerts, predictions, cascade, environmental
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -46,6 +47,7 @@ app.include_router(readings.router)
 app.include_router(alerts.router)
 app.include_router(predictions.router)
 app.include_router(cascade.router)
+app.include_router(environmental.router)
 
 
 @app.get("/health")

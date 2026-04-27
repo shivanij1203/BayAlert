@@ -44,3 +44,17 @@ export function getWatershedTopology() {
 export function triggerCascadeCheck() {
   return api.post("/cascade/check").then((r) => r.data);
 }
+
+export function getEnvironmentalLatest() {
+  return api.get("/environmental/latest").then((r) => r.data);
+}
+
+export function getRainForecast() {
+  return api.get("/environmental/rain-forecast").then((r) => r.data);
+}
+
+export function getEnvironmentalHistory(source, parameter, { hours = 24, stationId } = {}) {
+  const params = { source, parameter, hours };
+  if (stationId) params.station_id = stationId;
+  return api.get("/environmental/history", { params }).then((r) => r.data);
+}

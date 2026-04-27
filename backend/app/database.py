@@ -29,15 +29,18 @@ def init_db():
 
     Base.metadata.create_all(bind=engine)
 
-    # convert readings table to a hypertable if it isn't already
+    # convert time-series tables to hypertables if they aren't already
     with engine.connect() as conn:
-        conn.execute(
-            text("""
-                SELECT create_hypertable(
-                    'readings', 'recorded_at',
-                    if_not_exists => TRUE,
-                    migrate_data => TRUE
+        for table in ("readings", "environmental_readings"):
+            conn.execute(
+                text(
+                    f"""
+                    SELECT create_hypertable(
+                        '{table}', 'recorded_at',
+                        if_not_exists => TRUE,
+                        migrate_data => TRUE
+                    )
+                    """
                 )
-            """)
-        )
+            )
         conn.commit()

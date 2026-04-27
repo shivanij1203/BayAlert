@@ -48,6 +48,10 @@ celery_app.conf.beat_schedule = {
         "args": [],
         "options": {"countdown": 90},  # run after alert checks
     },
+    "ingest-env-every-30-min": {
+        "task": "app.tasks.worker.ingest_env",
+        "schedule": crontab(minute="*/30"),
+    },
 }
 
 
@@ -85,6 +89,24 @@ def check_alerts():
     except Exception as e:
         logger.error(f"alert check failed: {e}")
         return {"status": "error", "message": str(e)}
+    finally:
+        db.close()
+
+
+@celery_app.task(name="app.tasks.worker.ingest_env")
+def ingest_env():
+    """Pull NOAA CO-OPS tide + NWS hourly forecast data."""
+    from app.database import SessionLocal
+    from app.services.env_ingest import run_env_ingestion
+
+    db = SessionLocal()
+    try:
+        result = run_env_ingestion(db)
+        logger.info("env ingestion task complete: %s", result)
+        return {"status": "ok", **result}
+    except Exception as exc:  # noqa: BLE001
+        logger.error("env ingestion failed: %s", exc)
+        return {"status": "error", "message": str(exc)}
     finally:
         db.close()
 
