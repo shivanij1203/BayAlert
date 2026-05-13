@@ -43,6 +43,10 @@ export function getAlertDeliveries(alertId) {
   return api.get(`/alerts/${alertId}/deliveries`).then((r) => r.data);
 }
 
+export function getCascadeLeadTime(hours = 720) {
+  return api.get("/backtest/cascade-lead-time", { params: { hours } }).then((r) => r.data);
+}
+
 export function getAnomalies(stationId, parameter = "conductance") {
   return api
     .get(`/predictions/anomalies/${stationId}`, { params: { parameter } })

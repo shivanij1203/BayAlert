@@ -43,6 +43,9 @@ export default function NavBar({ onJumpToDashboard, connected }) {
         <button type="button" className="nav-link" onClick={() => scrollToId("why-it-matters")}>
           Why it matters
         </button>
+        <button type="button" className="nav-link" onClick={() => scrollToId("backtest")}>
+          Backtest
+        </button>
         <button type="button" className="nav-link" onClick={onJumpToDashboard}>
           Live dashboard
         </button>

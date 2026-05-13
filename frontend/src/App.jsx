@@ -14,6 +14,7 @@ import TrendChart from "./components/TrendChart";
 import AlertBanner from "./components/AlertBanner";
 import ForecastCard from "./components/ForecastCard";
 import EnvironmentalCard from "./components/EnvironmentalCard";
+import BacktestPanel from "./components/BacktestPanel";
 import { useAlertWebSocket } from "./hooks/useAlertWebSocket";
 import "./App.css";
 
@@ -52,6 +53,8 @@ function App() {
       <WhyItMatters />
 
       <HowItWorks />
+
+      <BacktestPanel />
 
       <section ref={dashboardRef} className="dashboard-section">
         <motion.div
