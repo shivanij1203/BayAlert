@@ -19,7 +19,7 @@ const FLOW_LINES = [
 
 const TAMPA_BAY_CENTER = [27.78, -82.36];
 
-// CartoDB Positron — clean, minimal map style used by Apple Maps and most modern dashboards
+// CartoDB Positron — clean, minimal map style for the light theme
 const TILE_URL = "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
 const TILE_ATTRIBUTION =
   '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>';
@@ -56,7 +56,7 @@ export default function StationMap({ selectedStation, onSelectStation }) {
             pathOptions={{
               color: "#0e7490",
               weight: 2.5,
-              opacity: 0.55,
+              opacity: 0.6,
               dashArray: "6 6",
             }}
           />
@@ -89,11 +89,11 @@ function StationMarker({ id, lat, lng, name, isActive, onSelect }) {
       {isActive && (
         <CircleMarker
           center={[lat, lng]}
-          radius={16}
+          radius={18}
           pathOptions={{
             color: "#0e7490",
             fillColor: "#0e7490",
-            fillOpacity: 0.15,
+            fillOpacity: 0.18,
             weight: 0,
           }}
           interactive={false}

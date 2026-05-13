@@ -73,39 +73,44 @@ export default function FlowingWaves({ intensity = 1.0, speed = 0.5, monochrome 
 
       void mainImage(out vec4 fragColor, in vec2 fragCoord) {
         vec2 uv = (2.0 * fragCoord - iResolution.xy) / min(iResolution.x, iResolution.y);
-        float t = iTime * iSpeed;
+        // slow time so the surface drifts at a calm, oceanic pace
+        float t = iTime * iSpeed * 0.45;
 
-        // two levels of domain warping give the ribbons a random, flowing shape
+        // two levels of domain warping create gently flowing ripples
         vec2 q = vec2(
-          fbm(uv * 1.2 + vec2(0.0, t * 0.25)),
-          fbm(uv * 1.2 + vec2(5.2, 1.3) - t * 0.18)
+          fbm(uv * 1.4 + vec2(0.0, t * 0.22)),
+          fbm(uv * 1.4 + vec2(5.2, 1.3) - t * 0.16)
         );
         vec2 r = vec2(
-          fbm(uv + 3.5 * q + vec2(1.7, 9.2) + t * 0.12),
-          fbm(uv + 3.5 * q + vec2(8.3, 2.8) - t * 0.12)
+          fbm(uv + 3.0 * q + vec2(1.7, 9.2) + t * 0.10),
+          fbm(uv + 3.0 * q + vec2(8.3, 2.8) - t * 0.10)
         );
-        float f = fbm(uv + 4.0 * r);
+        float f = fbm(uv + 3.5 * r);
 
-        // thin ribbon (band between two thresholds) + soft crest highlights
-        float streak    = smoothstep(0.38, 0.55, f) * (1.0 - smoothstep(0.55, 0.78, f));
-        float crestMask = pow(max(0.0, f - 0.62), 1.8);
-        float haze      = pow(max(0.0, f - 0.35), 2.0) * 0.35;
+        // tighter caustic shapes — sharper exponent + narrower bands
+        float shadow    = smoothstep(0.32, 0.50, f) * (1.0 - smoothstep(0.50, 0.72, f));
+        float highlight = pow(max(0.0, f - 0.66), 2.6);
+        float deepWash  = pow(max(0.0, 0.45 - f), 2.0) * 0.6;
 
-        vec3 bg, streakColor, crest;
+        vec3 bg, shadowColor, deepColor, highlightColor;
         if (iMonochrome) {
-          bg          = vec3(0.0);
-          streakColor = vec3(0.45);
-          crest       = vec3(0.90);
+          bg             = vec3(0.82);
+          shadowColor    = vec3(0.62);
+          deepColor      = vec3(0.45);
+          highlightColor = vec3(1.0);
         } else {
-          bg          = vec3(0.0, 0.005, 0.015);
-          streakColor = vec3(0.08, 0.55, 0.80);
-          crest       = vec3(0.55, 0.95, 1.00);
+          // shallow tropical water seen from above: turquoise surface,
+          // deeper teal in the troughs, near-white caustics catching the sun
+          bg             = vec3(0.45, 0.78, 0.85);
+          shadowColor    = vec3(0.20, 0.55, 0.65);
+          deepColor      = vec3(0.08, 0.32, 0.48);
+          highlightColor = vec3(0.92, 1.0, 1.0);
         }
 
         vec3 col = bg;
-        col = mix(col, streakColor, haze);
-        col = mix(col, streakColor * 1.1, streak * 0.85);
-        col = mix(col, crest, crestMask * 0.9);
+        col = mix(col, deepColor, deepWash);         // deeper-water tint in troughs
+        col = mix(col, shadowColor, shadow * 0.65);  // ripple shadows
+        col = mix(col, highlightColor, highlight);   // tight sun-glint caustics
 
         col *= iIntensity;
         fragColor = vec4(col, 1.0);
